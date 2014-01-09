@@ -9,7 +9,6 @@
 class ProgressItem; class SynthesisManager;
 class BlendPathRenderer; class BlendRenderItem; class BlendPathSubButton;
 class BlendPathWidget;
-class PathEvaluator;
 
 // Blend path container
 struct BlendPath{
@@ -103,8 +102,6 @@ private:
 	QVector< QVector< QSharedPointer<BlendPathSubButton> > > blendSubItems;
 	QVector< QGraphicsItem* > auxItems;
 	
-	PathEvaluator * pathsEval;
-
 	bool isSample;
 	bool isFinished;
 

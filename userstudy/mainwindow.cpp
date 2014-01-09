@@ -2,7 +2,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "Controls.h"
-#include "ExporterWidget.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -18,6 +17,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	this->ui->centralWidget->setMinimumSize(1280, 720);
 	this->resize(this->sizeHint());
 	this->ui->centralWidget->setMinimumSize(0,0);
+
+    // Center to screen
+    QDesktopWidget* m = QApplication::desktop();
+    QRect desk_rect = m->screenGeometry(m->screenNumber(QCursor::pos()));
+    int desk_x = desk_rect.width();
+    int desk_y = desk_rect.height();
+    int x = this->width();
+    int y = this->height();
+    this->move(desk_x / 2 - x / 2 + desk_rect.left(), desk_y / 2 - y / 2 + desk_rect.top());
 
 	prepareDemo();
 }
@@ -47,13 +55,10 @@ void MainWindow::prepareDemo()
 
 	scene->setProperty("controlsWidgetHeight", control->height());
 
-	/// Create [Shape gallery + Matcher + Blender]
-	ShapesGallery * gallery = new ShapesGallery(scene, "Select two shapes");
 	Matcher * matcher = new Matcher(scene, "Match parts");
 	Blender * blender = new Blender(scene, "Blended shapes");
 
 	// Connect all pages to logger
-	this->connect(gallery, SIGNAL(message(QString)), SLOT(message(QString)));
 	this->connect(matcher, SIGNAL(message(QString)), SLOT(message(QString)));
 	this->connect(blender, SIGNAL(message(QString)), SLOT(message(QString)));
 
@@ -64,12 +69,8 @@ void MainWindow::prepareDemo()
 	blender->connect(matcher, SIGNAL(corresponderCreated(GraphCorresponder *)), SLOT(setGraphCorresponder(GraphCorresponder *)), Qt::DirectConnection);
 	this->connect(blender, SIGNAL(showLogWindow()), SLOT(showLogWindow()));
 
-	// Connect
-	gallery->connect(scene, SIGNAL(wheelEvents(QGraphicsSceneWheelEvent*)), SLOT(wheelEvent(QGraphicsSceneWheelEvent*)), Qt::DirectConnection);
-
 	// Create session
-	session = new Session(scene, gallery, control, matcher, blender, this);
-	session->connect(gallery, SIGNAL(shapeChanged(int,QGraphicsItem*)), SLOT(shapeChanged(int,QGraphicsItem*)), Qt::DirectConnection);
+	session = new Session(scene, control, matcher, blender, this);
 	scene->connect(session, SIGNAL(update()), SLOT(update()));
 
 	// Everything is ready, load shapes now:
@@ -84,22 +85,7 @@ void MainWindow::prepareDemo()
 			QMessageBox::critical(this, "Cannot find data", "Cannot find data in this folder. Please restart and choose a correct one.");
 	}
 
-	gallery->loadDataset( datasetMap );
-	gallery->layout();
-
 	control->loadCategories( datasetFolder );
-
-	// Lastly, create exporter widget
-	ewidget = new ExporterWidget( session );
-	ewidget->move(20,120);
-	ewidget->resize(ewidget->sizeHint());
-
-	// Show exporter widget inside the scene
-	if( false )
-	{
-		QGraphicsProxyWidget * eproxy = scene->addWidget( ewidget, Qt::Tool | Qt::WindowTitleHint );
-		eproxy->setZValue(1e30);
-	}
 }
 
 MainWindow::~MainWindow()
@@ -145,14 +131,6 @@ void MainWindow::keyUpEvent(QKeyEvent* keyEvent)
 	if(keyEvent->key() == Qt::Key_L)
 	{
 		ui->logWidget->setVisible(!ui->logWidget->isVisible());
-	}
-
-	if(keyEvent->key() == Qt::Key_E)
-	{
-		int y = (QDesktopWidget().screenGeometry().height() - this->height()) * 0.5;
-		this->move(QDesktopWidget().screenGeometry().width() - this->width() - 12, y);
-		ewidget->move( this->pos().x() - ewidget->width() - 12, y );
-		this->setFocus();
 	}
 }
 

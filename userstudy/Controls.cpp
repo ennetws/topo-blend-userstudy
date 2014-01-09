@@ -9,7 +9,7 @@ Controls::Controls(QWidget *parent) : QWidget(parent), ui(new Ui::Controls)
 {
     ui->setupUi(this);
 
-	ui->categoriesBox->addItem("All");
+    //ui->categoriesBox->addItem("All");
 
     // Hide the stupid frame line
     QPalette p = QApplication::palette();
@@ -40,7 +40,7 @@ void Controls::loadCategories( QString datasetPath )
 		QString catName = line.front().trimmed();
 		QStringList catElements = line.back().split(QRegExp("[ \t]"), QString::SkipEmptyParts);
 
-		ui->categoriesBox->addItem(catName);
+        //ui->categoriesBox->addItem(catName);
 
 		categories[catName] = catElements;
 	}

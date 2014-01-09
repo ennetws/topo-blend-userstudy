@@ -67,8 +67,7 @@ HEADERS  += mainwindow.h \
             HttpUploader.h
 
 FORMS    += mainwindow.ui \
-            Controls.ui \
-            ExporterWidget.ui
+            Controls.ui
 
 # Icons and images
 RESOURCES += resources.qrc

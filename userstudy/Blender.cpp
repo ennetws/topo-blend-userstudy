@@ -10,9 +10,7 @@
 #include "Scheduler.h"
 #include "Task.h"
 #include "SynthesisManager.h"
-#include "ShapeRenderer.h"
 #include "SchedulerWidget.h"
-#include "PathEvaluator.h"
 
 typedef QVector< QSet<size_t> > ForcedGroups;
 Q_DECLARE_METATYPE( ForcedGroups )
@@ -44,10 +42,6 @@ Blender::Blender(Scene * scene, QString title) : DemoPage(scene,title), m_gcorr(
     this->connect(this, SIGNAL(blendPathsReady()), SLOT(computeBlendPaths()));
     this->connect(this, SIGNAL(blendPathsDone()), SLOT(blenderDone()));
 	this->connect(this, SIGNAL(blendDone()), SLOT(blenderAllResultsDone()));
-
-	// Paths evaluation
-	pathsEval = new PathEvaluator(this);
-	progress->connect(pathsEval, SIGNAL(progressChanged(double)), SLOT(setProgress(double)));
 }
 
 void Blender::setupBlendPathItems()
@@ -331,10 +325,8 @@ void Blender::preparePaths()
 	srand(0);
 
 	// Get 'k' schedules sorted by filter measure
-	if( isFiltering )
-		allSchedules = pathsEval->filteredSchedules( m_scheduler->manyRandomSchedules( numSchedules ) );
-	else
-		allSchedules = m_scheduler->manyRandomSchedules( numSchedules );
+	
+	allSchedules = m_scheduler->manyRandomSchedules( numSchedules );
 
 	schedulePaths( m_scheduler, m_blender );
 
@@ -503,22 +495,6 @@ void Blender::keyReleased( QKeyEvent* keyEvent )
 	if( keyEvent->key() == Qt::Key_U ){
 		this->isUniformPath = !this->isUniformPath;
 		emit( message( QString("Uniform sampling on path: %1").arg( this->isUniformPath ) ) );
-		return;
-	}
-
-	// EXPERIMENTS:
-	if( keyEvent->key() == Qt::Key_Q ){
-
-		// Experiment: path evaluation
-		//pathsEval->evaluatePaths();
-		//pathsEval->clusterPaths();
-		pathsEval->test_filtering();
-
-		return;
-	}
-	if(keyEvent->key() == Qt::Key_W)
-	{
-		pathsEval->test_topoDistinct();
 		return;
 	}
 
@@ -733,51 +709,7 @@ void Blender::clearSelectedInBetween()
 
 void Blender::exportSelected()
 {
-	qApp->setOverrideCursor(Qt::WaitCursor);
 
-	QString msg = "nothing selected.";
-	
-	foreach(BlendRenderItem * renderItem, selectedInBetween())
-	{
-		Structure::Graph * g = renderItem->graph();
-		int idx = int(g->property["t"].toDouble() * 100);
-			
-		QString sname = g->property["sourceName"].toString();
-		QString tname = g->property["targetName"].toString();
-		QString filename = sname + tname + "." + QString::number(idx);
-
-		// Create folder
-		QDir d("dataset");	
-		d.mkpath( filename );
-
-		// Set it as current
-		QDir::setCurrent( d.absolutePath() + "/" + filename );
-
-		// Generate the geometry and export the structure graph
-		s_manager->renderGraph(*g, filename, false, 5, true);
-
-		// Generate thumbnail
-		QString objFile = d.absolutePath() + "/" + filename + "/" + filename + ".obj";
-		QString thumbnailFile = d.absolutePath() + "/" + filename + "/" + filename + ".png";
-		ShapeRenderer::render( objFile ).save( thumbnailFile );
-
-		// Send to gallery
-		PropertyMap info;
-		info["Name"] = filename;
-		info["graphFile"] = d.absolutePath() + "/" + filename + "/" + filename + ".xml";
-		info["thumbFile"] = d.absolutePath() + "/" + filename + "/" + filename + ".png";
-		info["objFile"] = d.absolutePath() + "/" + filename + "/" + filename + ".obj";
-
-		emit( exportShape(filename, info) );
-
-		// Restore
-		QDir::setCurrent( d.absolutePath() + "/.." );
-	}
-
-	emit( message("Exporting: " + msg) );
-
-	qApp->restoreOverrideCursor();
-	QCursor::setPos(QCursor::pos());
 }
 
 void Blender::saveJob()
