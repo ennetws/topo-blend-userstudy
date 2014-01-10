@@ -11,29 +11,112 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	QGLFormat::setDefaultFormat(glf);
 
     ui->setupUi(this);
+
 	ui->logWidget->setVisible(false);
 
 	// Change window to preferred size
-	this->ui->centralWidget->setMinimumSize(1280, 720);
+	this->ui->createWidget->setMinimumSize(852, 480);
 	this->resize(this->sizeHint());
-	this->ui->centralWidget->setMinimumSize(0,0);
 
-    // Center to screen
-    QDesktopWidget* m = QApplication::desktop();
-    QRect desk_rect = m->screenGeometry(m->screenNumber(QCursor::pos()));
-    int desk_x = desk_rect.width();
-    int desk_y = desk_rect.height();
-    int x = this->width();
-    int y = this->height();
-    this->move(desk_x / 2 - x / 2 + desk_rect.left(), desk_y / 2 - y / 2 + desk_rect.top());
+	// Center to screen
+	QDesktopWidget* m = QApplication::desktop();
+	QRect desk_rect = m->screenGeometry(m->screenNumber(QCursor::pos()));
+	int desk_x = desk_rect.width();
+	int desk_y = desk_rect.height();
+	int x = this->width();
+	int y = this->height();
+	this->move(desk_x / 2 - x / 2 + desk_rect.left(), desk_y / 2 - y / 2 + desk_rect.top());
 
+	this->connect(ui->mainTabWidget, SIGNAL(currentChanged ( int )), SLOT(currentTabChanged ( int )));
+	
+	this->connect(ui->nextButtonWelcome, SIGNAL(clicked()), SLOT(nextTab()));
+	this->connect(ui->nextButtonTutorial, SIGNAL(clicked()), SLOT(nextTab()));
+
+	// Start at welcome page
+	this->ui->mainTabWidget->setCurrentIndex(0);
+}
+
+void MainWindow::currentTabChanged(int index)
+{
+	lockTabs(index);
+
+	switch(index)
+	{
+	case 0: // Welcome
+		break;
+	case 1: // Tutorial
+		break;
+	case 2: // Create
+		prepareCreate();
+		break;
+	case 3: // Finish
+		break;
+	}
+}
+
+void MainWindow::prepareCreate()
+{
+	this->ui->createWidget->setMinimumSize(ui->createWidth->geometry().width(), 480);
 	prepareDemo();
+	this->ui->createWidget->setMinimumSize(0,0);
+
+	// Load data
+	{
+		dataset = getDataset( "data" );
+	}
+
+	// Load tasks
+	{
+		QString tasksFilename = "data/tasks.txt";
+		QFile file(tasksFilename); 
+		if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+
+		QTextStream in(&file);
+		while (!in.atEnd()){
+			QStringList line = in.readLine().split(" ");
+
+			QString taskName = line.takeFirst();
+			QVector<PropertyMap> taskData;
+			foreach(QString d, line) taskData.push_back( dataset[d] );
+
+			session->tasks.push_back( StudyTask(taskName, taskData, session) );
+		}
+	}
+
+	session->connect(ui->nextButtonCreate, SIGNAL(clicked()), SLOT(displayNextTask()));
+	this->connect(session, SIGNAL(allTasksDone()), SLOT(nextTab()));
+
+	this->setMinimumSize(this->width(), this->height());
+
+	session->displayNextTask();
+}
+
+void MainWindow::nextTab()
+{
+	ui->mainTabWidget->setCurrentIndex( ui->mainTabWidget->currentIndex() + 1 );
+}
+
+void MainWindow::lockTabs(int except){
+	for (int i=0; i<ui->mainTabWidget->count(); i++) {
+		if (i!=except) 
+			ui->mainTabWidget->setTabEnabled(i, false);
+		else
+			ui->mainTabWidget->setTabEnabled(i, true);
+	}
+}
+
+void MainWindow::unlockTabs() {
+	for (int i=0; i<ui->mainTabWidget->count(); i++) {
+		ui->mainTabWidget->setTabEnabled(i, true);
+	}
 }
 
 void MainWindow::prepareDemo()
 {
 	viewport = new QGLWidget();
 	viewport->makeCurrent();
+
+	viewport->setFixedSize(ui->createWidget->width(), ui->createWidget->height());
 
 	ui->graphicsView->setViewport( viewport );
 	ui->graphicsView->setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
@@ -44,14 +127,16 @@ void MainWindow::prepareDemo()
 	ui->graphicsView->setRenderHint(QPainter::HighQualityAntialiasing, true);
 	ui->graphicsView->setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+	scene->setSceneRect(0,0, ui->createWidget->width(), ui->createWidget->height());
+
 	this->connect(scene, SIGNAL(message(QString)), SLOT(message(QString)));
 	this->connect(scene, SIGNAL(keyUpEvent(QKeyEvent*)), SLOT(keyUpEvent(QKeyEvent*)));
 
 	// Create controls
 	control = new Controls;
 	QGraphicsProxyWidget * proxy = scene->addWidget(control);
-	proxy->setPos((scene->width() * 0.5) - (proxy->boundingRect().width() * 0.5),
-		scene->height() - proxy->boundingRect().height());
+	proxy->setPos((	scene->width() - proxy->boundingRect().width()) * 0.5,
+					scene->height() - proxy->boundingRect().height());
 
 	scene->setProperty("controlsWidgetHeight", control->height());
 

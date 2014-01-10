@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-Scene::Scene(QObject *parent) : QGraphicsScene(parent)
+Scene::Scene(QObject *parent) : QGraphicsScene(parent), m_fadeOut(1.0)
 {
 	inputGraphs[0] = inputGraphs[1] = NULL;
 
@@ -8,6 +8,9 @@ Scene::Scene(QObject *parent) : QGraphicsScene(parent)
 
 	this->setSceneRect(0, 0, wparent->width(), wparent->height());
 	this->setupCamera();
+
+	// Tell scene about gallery item size
+	this->setProperty("itemWidth", 10);
 
 	this->setProperty("camera-rotate", true);
 }
@@ -118,8 +121,8 @@ QRect Scene::graphRect(bool isRight)
 	int x = (width() * 0.5) - graphWidth;
 	int y = (height() * 0.5) - (graphHeight * 0.5);
 
-	QRect r(x,y,graphWidth,graphHeight);
-	if(isRight) r.translate(r.width(),0);
+	QRect r(x, y, graphWidth, graphHeight);
+	if(isRight) r.translate(r.width(), 0);
 	return r;
 }
 
@@ -135,8 +138,43 @@ void Scene::drawForeground(QPainter *painter, const QRectF &rect)
 		painter->setPen(Qt::white);
 		QRect r = graphRect(i);
 		painter->drawText(r, Qt::AlignCenter, "Loading..");
-		//painter->drawRect(r);
+		painter->drawRect(r);
 		painter->restore();
+	}
+
+	{	
+		int width = rect.width();
+		int height = rect.height();
+
+		painter->beginNativePainting();
+
+		// Setup 2D
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0, width, height, 0, 0.0, -1.0);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		// Draw gradient quad
+		glDisable(GL_LIGHTING);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
+
+		glBegin(GL_QUADS);
+		glColor4d(0,0,0, m_fadeOut); glVertex2d(0,0); glVertex2d(width,0);
+		glColor4d(0.15,0.15,0.15, m_fadeOut); glVertex2d(width,height); glVertex2d(0,height);
+		glEnd();
+
+		// End 2D
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+
+		painter->endNativePainting();
 	}
 }
 
@@ -366,4 +404,33 @@ void Scene::resizeInputShapes()
 	toResize->property.remove("bbox"); // remove cached bounding box
 
 	update();
+}
+
+void Scene::setFadeOut( double fadeValue )
+{
+	m_fadeOut = fadeValue;
+	
+	this->update();
+}
+
+QPropertyAnimation * Scene::doFadeIn( int duration, bool isAutoStart)
+{
+	QPropertyAnimation * anim = new QPropertyAnimation(this, "fadeOut");
+	anim->setDuration( duration );
+	anim->setStartValue( m_fadeOut );
+	anim->setEndValue( 0.0 );
+	anim->setEasingCurve( QEasingCurve::InOutQuad );
+	if(isAutoStart) anim->start(QAbstractAnimation::DeleteWhenStopped);
+	return anim;
+}
+
+QPropertyAnimation * Scene::doFadeOut(int duration, bool isAutoStart)
+{
+	QPropertyAnimation * anim = new QPropertyAnimation(this, "fadeOut");
+	anim->setDuration( duration );
+	anim->setStartValue( m_fadeOut );
+	anim->setEndValue( 1.0 );
+	anim->setEasingCurve( QEasingCurve::InOutQuad );
+	if(isAutoStart) anim->start(QAbstractAnimation::DeleteWhenStopped);
+	return anim;
 }

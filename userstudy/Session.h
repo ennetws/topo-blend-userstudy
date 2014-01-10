@@ -5,6 +5,17 @@
 #include "Controls.h"
 #include "Matcher.h"
 #include "Blender.h"
+#include <QElapsedTimer>
+
+class Session;
+
+struct StudyTask{
+	QVector<PropertyMap> data;
+	QString name;
+	QMap<QString, QElapsedTimer> timer;
+	Session * session;
+	StudyTask(QString name = "", QVector<PropertyMap> data = QVector<PropertyMap>(), Session * session = NULL) : name(name), data(data), session(session){ }
+};
 
 class Session : public QObject
 {
@@ -16,8 +27,13 @@ public:
     Matcher * m;
     Blender * b;
 
+	QVector<StudyTask> tasks;
+	int curTaskIndex;
+
 signals:
     void update();
+
+	void allTasksDone();
 
 public slots:
     void shapeChanged(int,QGraphicsItem*);
@@ -26,4 +42,8 @@ public slots:
     void showSelect();
     void showMatch();
     void showCreate();
+
+	void displayNextTask();
+	void emitAllTasksDone();
+	void advanceTasks();
 };

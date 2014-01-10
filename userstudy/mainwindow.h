@@ -27,10 +27,19 @@ private:
     Session * session;
     Controls * control;
 
+	DatasetMap dataset;
+
 public slots:
 	void message(QString m);
 	void keyUpEvent(QKeyEvent* keyEvent);
 	void showLogWindow();
 
 	void prepareDemo();
+	void currentTabChanged(int index);
+	void nextTab();
+
+	void lockTabs(int except);
+	void unlockTabs();
+
+	void prepareCreate();
 };

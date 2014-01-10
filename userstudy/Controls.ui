@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>347</width>
-    <height>112</height>
+    <width>209</width>
+    <height>65</height>
    </rect>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget { background:transparent }
 
-QTabBar { font-size: 16px; alignment: center; }
-QTabBar::tab { background: rgba(20, 20, 20, 100); color: lightgray; padding: 15px; margin-left:10px; min-width:70px;} 
+QTabBar { font-size: 14px; alignment: center; }
+QTabBar::tab { background: rgba(20, 20, 20, 100); color: lightgray; } 
 QTabBar::tab:selected { background: rgb(255,153,0); color: white; } 
 QTabBar::tab:hover:!pressed { background:rgb(255,192,98); color:white;  }
 
@@ -22,7 +22,6 @@ QTabBar::tab:hover:!pressed { background:rgb(255,192,98); color:white;  }
 QPushButton { 
 	background:rgb(90,90,90,128);
 	border: 3px solid rgb(90,90,90,0);
-	padding: 5px;
     color: white;
 	font-size: 12px;
 }
@@ -30,7 +29,6 @@ QPushButton {
 QCheckBox { 
 	background:rgb(90,90,90,128);
 	border: 3px solid rgb(90,90,90,0);
-	padding: 5px;
     color: white;
 	font-size: 12px;
 }
@@ -65,17 +63,8 @@ QPushButton:pressed{ background:rgb(255,153,0); border-color:#FFB444; top:2px; }
        <string>Match</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <property name="leftMargin">
+       <property name="margin">
         <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
        </property>
        <property name="spacing">
         <number>0</number>
@@ -105,10 +94,7 @@ QPushButton:checked#groupingButton{ background:rgb(50,118,211); border-color: rg
           <enum>QFrame::Raised</enum>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>0</number>
           </property>
           <item>
@@ -224,17 +210,8 @@ QPushButton:checked#groupingButton{ background:rgb(50,118,211); border-color: rg
        <string>Create</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <property name="leftMargin">
+       <property name="margin">
         <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
        </property>
        <property name="spacing">
         <number>0</number>

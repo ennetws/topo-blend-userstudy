@@ -4,7 +4,7 @@
 
 Session::Session(   Scene *scene, Controls * control,
                     Matcher * matcher, Blender * blender, QObject *parent) : QObject(parent),
-                    s(scene), c(control), m(matcher), b(blender)
+                    s(scene), c(control), m(matcher), b(blender), curTaskIndex(-1)
 {
     this->connect( control, SIGNAL(hideAll()), SLOT(hideAll()) );
     this->connect( control, SIGNAL(showSelect()), SLOT(showSelect()));
@@ -84,4 +84,47 @@ void Session::showCreate(){
 void Session::hideAll(){
     if(m->isVisible()) m->hide();
     if(b->isVisible()) b->hide();
+}
+
+void Session::displayNextTask()
+{
+	// Special case: last task
+	if(curTaskIndex == tasks.size() - 1)
+	{
+		this->connect(s->doFadeOut(), SIGNAL(finished()), SLOT(emitAllTasksDone()));
+		return;
+	}
+
+	// Regular case
+	this->connect(s->doFadeOut(), SIGNAL(finished()), SLOT(advanceTasks()));
+
+	curTaskIndex += 1;
+}
+
+void Session::advanceTasks()
+{
+	StudyTask curTask = tasks[curTaskIndex];
+
+	for(int i = 0; i < curTask.data.size(); i++)
+	{
+		PropertyMap itemData = curTask.data[i];
+
+		ShapeItem * item = new ShapeItem;
+		item->property["name"] = itemData["graphFile"];
+		item->property["graph"] = itemData["graphFile"];
+
+		// Thumbnail
+		QPixmap thumbnail( itemData["thumbFile"].toString() );
+		item->property["image"].setValue(thumbnail);
+		item->width = thumbnail.width();
+		item->height = thumbnail.height();
+		this->shapeChanged(i, item);
+	}
+
+	//s->doFadeIn();
+}
+
+void Session::emitAllTasksDone()
+{
+	emit( allTasksDone() );
 }

@@ -5,17 +5,24 @@
 class Scene : public QGraphicsScene
 {
     Q_OBJECT
+	Q_PROPERTY(double fadeOut READ fadeOut WRITE setFadeOut NOTIFY fadeChanged)
 public:
     explicit Scene(QObject *parent = 0);
 
 	GraphItem * inputGraphs[2];
 	qglviewer::Camera * camera;
+	double m_fadeOut;
 
     bool isInputReady() { return inputGraphs[0] && inputGraphs[1]; }
 
     QRect graphRect(bool isRight);
 
 	QGraphicsProxyWidget * addButton( int x, int y, QString text, QImage icon = QImage() );
+
+	double fadeOut() { return m_fadeOut; }
+
+	QPropertyAnimation * doFadeIn(int duration = 500, bool isAutoStart = true);
+	QPropertyAnimation * doFadeOut(int duration = 500, bool isAutoStart = true);
 
 protected:
     void drawBackground ( QPainter * painter, const QRectF & rect );
@@ -44,9 +51,12 @@ signals:
 	void doubleClick();
 	void rightClick();
 	void message(QString);
+	void fadeChanged();
 
 public slots:
 	void resizeInputShapes();
+
+	void setFadeOut(double fadeValue);
 };
 
 // Utility:
